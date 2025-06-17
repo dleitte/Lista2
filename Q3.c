@@ -1,4 +1,4 @@
-// EQUIPE: Maria Eduarda e Sophia Garcia
+// Sophia Garcia e Maria Eduarda Souza
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -6,7 +6,6 @@
 #include <math.h>
 
 #define MAX_LINE 4000
-#define MAX_TOKENS 1000
 
 typedef struct ListaInterna {
     float valor;
@@ -80,6 +79,7 @@ void associar(ListaExterna* le, ListaInterna* li) {
                 ListaInterna* novo = novoNoLI(li->valor);
                 novo->prox = atualLE->sublista;
                 atualLE->sublista = novo;
+                break;
             }
             atualLE = atualLE->prox;
         }
@@ -87,11 +87,12 @@ void associar(ListaExterna* le, ListaInterna* li) {
     } while (li != ini);
 }
 
-void imprimir(ListaExterna* le) {
-    printf("[");
+void imprimir(ListaExterna* le, FILE* fp_out) {
+    fprintf(fp_out, "[");
     ListaExterna* atual = le;
     while (atual) {
-        printf("%d(", atual->chave);
+        fprintf(fp_out, "%d(", atual->chave);
+
         ListaInterna* sub = atual->sublista;
         ListaInterna* ordenada = NULL;
         while (sub) {
@@ -111,15 +112,22 @@ void imprimir(ListaExterna* le) {
 
         ListaInterna* ptr = ordenada;
         while (ptr) {
-            printf("%.2f", ptr->valor);
-            if (ptr->prox) printf("−>");
+            fprintf(fp_out, "%.2f", ptr->valor);
+            if (ptr->prox) fprintf(fp_out, "−>");
             ptr = ptr->prox;
         }
-        printf(")");
-        if (atual->prox) printf("−>");
+        fprintf(fp_out, ")");
+
+        if (atual->prox) fprintf(fp_out, "->");
         atual = atual->prox;
+
+        while (ordenada) {
+            ListaInterna* temp = ordenada;
+            ordenada = ordenada->prox;
+            free(temp);
+        }
     }
-    printf("]\n");
+    fprintf(fp_out, "]\n");
 }
 
 void liberarTudo(ListaExterna* le) {
@@ -138,14 +146,22 @@ void liberarTudo(ListaExterna* le) {
 }
 
 int main() {
+    FILE* fp_in = fopen("L1Q3.in", "r");
+    FILE* fp_out = fopen("L1Q3.out", "w");
+
+    if (!fp_in || !fp_out) {
+        perror("Erro ao abrir arquivos");
+        return 1;
+    }
+
     char linha[MAX_LINE];
 
-    while (fgets(linha, sizeof(linha), stdin)) {
+    while (fgets(linha, sizeof(linha), fp_in)) {
         ListaExterna* le = NULL;
         ListaInterna* li = NULL;
 
         char* token = strtok(linha, " \n");
-        int modo = 0; 
+        int modo = 0;
 
         while (token) {
             if (strcmp(token, "LE") == 0) {
@@ -163,9 +179,11 @@ int main() {
         }
 
         associar(le, li);
-        imprimir(le);
+        imprimir(le, fp_out);
         liberarTudo(le);
     }
 
+    fclose(fp_in);
+    fclose(fp_out);
     return 0;
 }
